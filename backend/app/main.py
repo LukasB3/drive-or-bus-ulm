@@ -3,27 +3,34 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.tasks.fetch_parking import parking_loop
 from app.routes import health, parking
+from app.logger import logger
+
+"""
+Entrypoint for the FastAPI application. 
+"""
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # STARTUP: This runs when the Hetzner server starts the container
-    print("🚀 Starting Ulm Drive-or-Bus Backend...")
+  
+    logger.info("Starting Ulm Drive-or-Bus Backend...")
 
-    # We create a background task so it doesn't "block" the API from starting
+    # Create background tasks here so it doesn't "block" the API from starting
     parking_task = asyncio.create_task(parking_loop())
 
-    yield  # The FastAPI app runs here
+    # The FastAPI app runs here
+    yield
 
     # SHUTDOWN: Gracefully stop the loop if the server stops
     parking_task.cancel()
-    print("🛑 Backend shutting down...")
+
+    logger.info("🛑 Backend shutting down...")
 
 app = FastAPI(
     title="Ulm Drive-or-Bus API",
     lifespan=lifespan
 )
 
-# Include our routes
+# Routes
 app.include_router(health.router)
 app.include_router(parking.router, prefix="/api")
 

@@ -1,6 +1,12 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
+"""
+Used to define the data models for the parking data we fetch from
+https://parken-in-ulm.de/get_parking_data. We are doing this to ensure
+the data we receive from the API is in the expected format, since the
+data from the API might change.
+"""
 
 class ParkingFacility(BaseModel):
     id: int
@@ -19,7 +25,6 @@ class ParkingDataResult(BaseModel):
 
 
 class ParkingDataResponse(BaseModel):
-    """JSON-RPC 2.0 wrapper from parken-in-ulm.de"""
     jsonrpc: str = "2.0"
     id: Optional[int] = None
     result: ParkingDataResult

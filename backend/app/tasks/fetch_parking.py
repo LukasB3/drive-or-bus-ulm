@@ -3,9 +3,14 @@ import httpx
 from app.config import settings
 from app.database import supabase
 from app.utils.parking_models import ParkingDataResponse
+from app.logger import logger
+
+"""
+Fetches parking data in a fixed interval (defined in Config FETCH_INTERVAL_SECONDS)
+from https://parken-in-ulm.de/get_parking_data and syncs it to Supabase database.
+"""
 
 async def fetch_and_sync_parking():
-    """Fetches real-time parking data from parken-in-ulm.de and syncs to Supabase."""
     async with httpx.AsyncClient(follow_redirects=True) as client:
         try:
             response = await client.post(
@@ -29,13 +34,13 @@ async def fetch_and_sync_parking():
                     "vacant_spaces": facility.vacant_parking_spaces,
                 }).execute()
 
-            print(f"✅ Synced {len(validated.result.facilities)} parking facilities.")
-
+            logger.info(f"Successfully synced {len(validated.result.facilities)} parking facilities.") 
+            
         except Exception as e:
-            print(f"❌ Error in parking sync: {e}")
+            logger.error(f"Failed to sync parking data: {e}")
 
 async def parking_loop():
-    """Infinite loop to keep the data fresh."""
+    logger.info("Starting background parking sync loop...")
     while True:
         await fetch_and_sync_parking()
         await asyncio.sleep(settings.FETCH_INTERVAL_SECONDS)
