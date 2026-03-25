@@ -1,0 +1,224 @@
+You are explaining the "drive-or-bus-ulm" project to someone who has never seen it. Use the structure and design choices below to give a clear, complete overview.
+
+================================================================================
+PROJECT OVERVIEW
+================================================================================
+
+Real-time parking occupancy tracker for Ulm, Germany. The system fetches live occupancy data from city parking garages, stores it in Supabase, and displays it on an interactive map. Designed to later incorporate live bus position data via WebSockets, enabling a "should I drive or take the bus?" recommendation.
+
+================================================================================
+PROJECT STRUCTURE
+================================================================================
+
+drive-or-bus-ulm/
+├── backend/                        # FastAPI Python backend
+│   ├── app/
+│   │   ├── main.py                 # App entrypoint, lifespan, CORS, route registration
+│   │   ├── config.py               # Pydantic settings (dev/prod), env var loading
+│   │   ├── database.py             # Supabase client initialization
+│   │   ├── logger.py               # Structured logging setup
+│   │   ├── ws_manager.py           # WebSocket manager (placeholder for bus data)
+│   │   ├── routes/
+│   │   │   ├── health.py           # GET /health — DB connectivity check
+│   │   │   ├── parking.py          # GET /api/parking — latest occupancy (REST fallback)
+│   │   │   └── transit.py          # Future bus/transit routes (empty)
+│   │   ├── tasks/
+│   │   │   ├── fetch_parking.py    # Background loop: fetch parking API → upsert Supabase
+│   │   │   └── fetch_transit.py    # Future bus data fetcher (empty)
+│   │   └── utils/
+│   │       ├── parking_models.py   # Pydantic models for API validation + response
+│   │       ├── gtfs_decoder.py     # GTFS-RT protobuf decoder (for future bus data)
+│   │       └── ml_inference.py     # ML model inference (future occupancy forecasting)
+│   ├── tests/
+│   ├── pyproject.toml              # Python deps: FastAPI, httpx, supabase, uvicorn
+│   └── Dockerfile
+│
+├── frontend/                       # Vite + TypeScript SPA
+│   ├── index.html                  # Entry point, mounts #map div
+│   ├── vite.config.ts              # Dev proxy /api → localhost:8000
+│   ├── tsconfig.json               # Strict TS, ES2023 target, erasableSyntaxOnly
+│   ├── .env                        # VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
+│   └── src/
+│       ├── main.ts                 # Init map, load data, subscribe to Realtime
+│       ├── config.ts               # Supabase URL/key, map center/zoom constants
+│       ├── supabase.ts             # Supabase JS client initialization
+│       ├── api/
+│       │   └── parking.ts          # fetchParkingLots() via RPC, subscribeToUpdates()
+│       ├── map/
+│       │   ├── map.ts              # Leaflet map, CircleMarker management, popups
+│       │   └── colors.ts           # occupancyColor(pct) → green/amber/red hex
+│       └── types/
+│           └── parking.ts          # ParkingLot interface
+│
+├── db/
+│   └── init_supabase.sql           # Full schema: tables, indexes, triggers, functions
+│
+├── ml/                             # ML model training (skeleton, not yet implemented)
+│   ├── train_model.py
+│   └── pyproject.toml
+│
+├── docker-compose.yml
+└── CLAUDE.md                       # Project instructions and conventions
+
+================================================================================
+DESIGN CHOICES & RATIONALE
+================================================================================
+
+1. DATA ARCHITECTURE — SEPARATION OF CONCERNS
+
+   Parking data and (future) bus data use completely different update patterns:
+
+   - Parking: Updates every 5 minutes. Backend fetches from the city API and inserts
+     into Supabase. Frontend subscribes to Supabase Realtime for push updates.
+     No custom WebSocket needed — Supabase handles the push.
+
+   - Buses (future): Updates every ~10 seconds. Backend will receive GTFS-RT feeds
+     and broadcast positions via a FastAPI WebSocket endpoint. Frontend connects
+     directly to the backend WebSocket. Too frequent for database round-trips.
+
+   This means the frontend has two independent data channels that feed into the
+   same Leaflet map via separate LayerGroups.
+
+2. FRONTEND QUERIES SUPABASE DIRECTLY (not through the backend)
+
+   The frontend uses @supabase/supabase-js with the anon key to:
+   - Call the get_latest_parking_status() RPC function on page load
+   - Subscribe to INSERT events on parking_status via Supabase Realtime
+
+   Why not go through the backend? The backend's job is data ingestion, not
+   serving reads. Supabase already provides a secure, performant read API with
+   Row Level Security. This avoids an unnecessary hop and lets the backend
+   focus on fetching and processing.
+
+   The /api/parking REST endpoint still exists as a public API fallback.
+
+3. SUPABASE REALTIME INSTEAD OF POLLING
+
+   When the backend inserts new parking_status rows, Supabase Realtime pushes
+   them to all subscribed frontend clients. No polling interval, no wasted
+   requests. The frontend re-fetches the full latest status on each push event
+   (simple and correct for 10 garages).
+
+   Enabled via: ALTER PUBLICATION supabase_realtime ADD TABLE parking_status;
+
+4. LEAFLET FOR THE MAP
+
+   Leaflet is lightweight (~40KB gzipped), free, uses OpenStreetMap tiles (no API
+   key), and is the right fit for 10 static markers with colored circles. MapLibre
+   GL JS with vector tiles would be overkill here.
+
+   Markers are stored in a Map<id, CircleMarker> and updated in-place — never
+   destroyed and recreated.
+
+5. VITE + VANILLA TYPESCRIPT (no framework)
+
+   A map with 10 markers and a Realtime subscription doesn't need React or Vue.
+   Vite gives TypeScript, HMR, ES modules, and a production build with zero
+   config. The codebase is ~100 lines of TS total.
+
+   tsconfig uses erasableSyntaxOnly: true — meaning no enums, use `import type`
+   for type-only imports.
+
+6. OCCUPANCY VISUALIZATION
+
+   CircleMarkers are color-coded by occupancy percentage:
+   - Green (#22c55e): < 70% full
+   - Amber (#f59e0b): 70–90% full
+   - Red (#ef4444): ≥ 90% full
+
+   Popups show garage name, vacant/total spaces, percentage, and last update
+   time — all in German (the target audience is local).
+
+7. PARKING COORDINATES ARE HARDCODED
+
+   The parken-in-ulm.de API does not return lat/lon. Coordinates for all 10
+   garages are hardcoded in backend/app/tasks/fetch_parking.py and upserted
+   into the parking_lots table on each sync.
+
+8. SQL FUNCTION FOR INITIAL LOAD
+
+   get_latest_parking_status() uses DISTINCT ON to efficiently join each
+   parking_lot with its single most recent parking_status row. Called via
+   Supabase RPC from the frontend. The existing index on
+   (lot_id, fetched_at DESC) makes this fast.
+
+9. DEPLOYMENT TARGETS
+
+   - Frontend: Cloudflare Pages (static files from frontend/dist/)
+   - Backend: Hetzner VPS (2 vCPU, 4GB RAM, 40GB disk)
+   - Database: Supabase (hosted Postgres, eu-central-1)
+
+   The frontend needs VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY as build-time
+   environment variables.
+
+10. EXTENSIBILITY FOR BUS DATA
+
+    Adding live bus positions later requires:
+    - backend/app/tasks/fetch_bus.py — GTFS-RT feed fetcher (every 10s)
+    - backend/app/routes/bus_ws.py — WebSocket endpoint broadcasting positions
+    - frontend/src/ws/bus.ts — WebSocket client
+    - frontend/src/map/busLayer.ts — separate Leaflet LayerGroup for bus markers
+
+    The existing parking code doesn't change. Both layers coexist on the same map.
+
+================================================================================
+DATABASE SCHEMA (Supabase / Postgres)
+================================================================================
+
+parking_lots (static metadata):
+  id INTEGER PRIMARY KEY        -- matches facility ID from parken-in-ulm.de (1-10)
+  name TEXT
+  total_spaces INTEGER
+  lat DOUBLE PRECISION
+  lon DOUBLE PRECISION
+  created_at TIMESTAMPTZ
+  updated_at TIMESTAMPTZ        -- auto-updated via trigger
+
+parking_status (time-series occupancy):
+  id BIGINT (auto-increment)
+  lot_id INTEGER → parking_lots(id)
+  current_occupancy INTEGER
+  vacant_spaces INTEGER
+  forecast_occupancy INTEGER    -- nullable, reserved for ML predictions
+  fetched_at TIMESTAMPTZ
+
+Index: (lot_id, fetched_at DESC) — optimizes "latest status per lot" queries
+Function: get_latest_parking_status() — returns joined latest row per lot
+Realtime: enabled on parking_status for live frontend subscriptions
+
+================================================================================
+DATA FLOW
+================================================================================
+
+  parken-in-ulm.de API
+         │
+         │ POST (JSON-RPC 2.0), every 5 min
+         ▼
+  ┌──────────────┐
+  │   Backend     │  fetch_parking.py → upsert parking_lots + insert parking_status
+  │   (FastAPI)   │
+  └──────┬───────┘
+         │
+         │ INSERT into Supabase
+         ▼
+  ┌──────────────┐
+  │   Supabase    │  Postgres + Realtime
+  └──────┬───────┘
+         │
+         │ Realtime push (on INSERT) + RPC (initial load)
+         ▼
+  ┌──────────────┐
+  │   Frontend    │  Leaflet map with color-coded CircleMarkers
+  │   (Vite + TS) │
+  └──────────────┘
+
+
+ Terminal 1 — Backend:                                                                                                                                                                                                             
+  cd ~/projects/drive-or-bus-ulm/backend
+  uv run uvicorn app.main:app --host 127.0.0.1 --port 8000                                                                                                                                                                          
+                                                                                                                                                                                                                                  
+  Terminal 2 — Frontend:
+  cd ~/projects/drive-or-bus-ulm/frontend                                                                                                                                                                                           
+  npm run dev                            
+                                                                                                                                                                                                                                    
+  Then open http://localhost:5173 — you should see the Ulm map with 10 parking markers.

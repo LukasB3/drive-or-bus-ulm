@@ -11,7 +11,7 @@ class Settings(BaseSettings):
 
     APP_NAME: str = "Ulm Drive-or-Bus"
     PARKING_API_URL: str = "https://parken-in-ulm.de/get_parking_data"
-    FETCH_INTERVAL_SECONDS: int = 300
+    FETCH_INTERVAL_SECONDS: int = 30
     
     # Safety mechanism to prevent accidental use of production credentials in development.
     # OVERRIDE_ME is a placeholder that must be replaced with actual credentials in the .env

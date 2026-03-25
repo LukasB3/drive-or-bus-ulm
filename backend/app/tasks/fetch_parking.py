@@ -15,7 +15,7 @@ PARKING_COORDINATES: dict[int, tuple[float, float]] = {
     1: (48.397127, 9.990928),   # Am Rathaus 
     2: (48.397126, 9.990926),   # Salzstadel
     3: (48.398077, 9.984820),   # Deutschhaus 
-    4: (448.39658, 9.988236),   # Fischerviertel 
+    4: (48.39658, 9.988236),    # Fischerviertel
     5: (48.401646, 10.00243),   # CCU Nord
     6: (48.400941, 10.00406),   # CCU Süd 
     7: (48.401180, 9.985870),   # Theater 

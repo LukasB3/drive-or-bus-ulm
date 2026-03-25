@@ -1,6 +1,7 @@
 import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.tasks.fetch_parking import parking_loop
 from app.routes import health, parking
 from app.logger import logger
@@ -28,6 +29,16 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Ulm Drive-or-Bus API",
     lifespan=lifespan
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_methods=["GET"],
+    allow_headers=["*"],
 )
 
 # Routes

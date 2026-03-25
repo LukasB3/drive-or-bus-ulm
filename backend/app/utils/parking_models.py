@@ -28,3 +28,16 @@ class ParkingDataResponse(BaseModel):
     jsonrpc: str = "2.0"
     id: Optional[int] = None
     result: ParkingDataResult
+
+
+class ParkingLotStatus(BaseModel):
+    id: int
+    name: str
+    total_spaces: int
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+    current_occupancy: int
+    vacant_spaces: int
+    occupancy_pct: float
+    forecast_occupancy: Optional[int] = None
+    fetched_at: Optional[str] = None

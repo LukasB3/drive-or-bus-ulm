@@ -49,3 +49,27 @@ CREATE TRIGGER update_parking_lots_modtime
     BEFORE UPDATE ON public.parking_lots
     FOR EACH ROW
     EXECUTE PROCEDURE update_modified_column();
+
+-- ############################################################
+-- FUNCTION: GET LATEST PARKING STATUS (for frontend initial load)
+-- ############################################################
+CREATE OR REPLACE FUNCTION get_latest_parking_status()
+RETURNS TABLE (
+    id INTEGER, name TEXT, total_spaces INTEGER,
+    lat DOUBLE PRECISION, lon DOUBLE PRECISION,
+    current_occupancy INTEGER, vacant_spaces INTEGER,
+    forecast_occupancy INTEGER, fetched_at TIMESTAMPTZ
+) AS $$
+    SELECT DISTINCT ON (pl.id)
+        pl.id, pl.name, pl.total_spaces, pl.lat, pl.lon,
+        ps.current_occupancy, ps.vacant_spaces,
+        ps.forecast_occupancy, ps.fetched_at
+    FROM parking_lots pl
+    LEFT JOIN parking_status ps ON ps.lot_id = pl.id
+    ORDER BY pl.id, ps.fetched_at DESC;
+$$ LANGUAGE sql STABLE;
+
+-- ############################################################
+-- REALTIME: Enable for parking_status (live frontend updates)
+-- ############################################################
+ALTER PUBLICATION supabase_realtime ADD TABLE parking_status;
