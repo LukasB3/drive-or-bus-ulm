@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Ulmer Münster silhouette -->
+  <g fill="#1a1a2e">
+    <!-- Main spire -->
+    <polygon points="32,2 29,22 35,22"/>
+    <!-- Spire cross -->
+    <rect x="31" y="0" width="2" height="4"/>
+    <rect x="29.5" y="1" width="5" height="1.5"/>
+    <!-- Upper tower -->
+    <rect x="27" y="22" width="10" height="12"/>
+    <!-- Tower windows -->
+    <rect x="29" y="24" width="2" height="3" fill="#f0e6d3"/>
+    <rect x="33" y="24" width="2" height="3" fill="#f0e6d3"/>
+    <!-- Clock section -->
+    <rect x="25" y="34" width="14" height="6"/>
+    <circle cx="32" cy="37" r="2" fill="#f0e6d3"/>
+    <!-- Lower tower -->
+    <rect x="23" y="40" width="18" height="10"/>
+    <!-- Lower windows -->
+    <rect x="26" y="42" width="3" height="4" fill="#f0e6d3" rx="1.5"/>
+    <rect x="30.5" y="42" width="3" height="4" fill="#f0e6d3" rx="1.5"/>
+    <rect x="35" y="42" width="3" height="4" fill="#f0e6d3" rx="1.5"/>
+    <!-- Main entrance door -->
+    <rect x="29.5" y="47" width="5" height="3" fill="#f0e6d3" rx="2.5"/>
+    <!-- Nave (main body) -->
+    <rect x="18" y="50" width="28" height="12"/>
+    <!-- Nave roof -->
+    <polygon points="18,50 46,50 48,48 16,48"/>
+    <!-- Side towers left -->
+    <rect x="14" y="44" width="6" height="18"/>
+    <polygon points="14,44 17,38 20,44"/>
+    <!-- Side towers right -->
+    <rect x="44" y="44" width="6" height="18"/>
+    <polygon points="44,44 47,38 50,44"/>
+    <!-- Base -->
+    <rect x="12" y="62" width="40" height="2"/>
+  </g>
+</svg>

@@ -10,8 +10,18 @@ ENV_FILE = ROOT_DIR / ".env"
 class Settings(BaseSettings):
 
     APP_NAME: str = "Ulm Drive-or-Bus"
+
+    # fetches live parking data
     PARKING_API_URL: str = "https://parken-in-ulm.de/get_parking_data"
     FETCH_INTERVAL_SECONDS: int = 300
+
+    # fetches live bus data
+    SWU_API_URL: str = "https://api.swu.de/mobility/v1/vehicle/trip/Trip"
+    BUS_FETCH_INTERVAL_SECONDS: int = 15
+
+    # updates the routes of the busses
+    GTFS_URL: str = "https://gtfs.swu.de/daten/SWU.zip"
+    GTFS_FETCH_INTERVAL_SECONDS: int = 604800  # 1 week
     
     # Safety mechanism to prevent accidental use of production credentials in development.
     # OVERRIDE_ME is a placeholder that must be replaced with actual credentials in the .env
@@ -25,7 +35,12 @@ class DevSettings(Settings):
 
     ENV_NAME: str = "dev"
     DEBUG: bool = True
-    
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://drive-or-bus-ulm.pages.dev",
+    ]
+
     SUPABASE_URL: str = Field(..., validation_alias="SUPABASE_DEV_URL")
     SUPABASE_KEY: str = Field(..., validation_alias="SUPABASE_DEV_KEY")
     SUPABASE_ANON_KEY: str = Field(..., validation_alias="SUPABASE_DEV_ANON")
@@ -34,6 +49,9 @@ class ProdSettings(Settings):
 
     ENV_NAME: str = "prod"
     DEBUG: bool = False
+    CORS_ORIGINS: list[str] = [
+        "https://drive-or-bus-ulm.pages.dev",
+    ]
 
     SUPABASE_URL: str = Field(..., validation_alias="SUPABASE_PROD_URL")
     SUPABASE_KEY: str = Field(..., validation_alias="SUPABASE_PROD_KEY")
