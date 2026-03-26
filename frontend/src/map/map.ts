@@ -2,9 +2,11 @@ import L from 'leaflet'
 import { MAP_CENTER, MAP_ZOOM } from '../config'
 import { occupancyColor } from './colors'
 import type { ParkingLot } from '../types/parking'
+import { isParkingVisible, subscribe } from '../header/state'
 
 const markers = new Map<number, L.Marker>()
 let map: L.Map
+let latestLots: ParkingLot[] = []
 
 // Inject parking marker styles once
 const parkingStyle = document.createElement('style')
@@ -44,7 +46,28 @@ export function createMap(): L.Map {
     maxZoom: 20,
   }).addTo(map)
 
+  subscribe(() => {
+    const visible = isParkingVisible()
+    for (const marker of markers.values()) {
+      if (visible) marker.addTo(map)
+      else marker.remove()
+    }
+  })
+
   return map
+}
+
+export function getParkingSummary(): { vacant: number; total: number; fetchedAt: string | null } {
+  let vacant = 0, total = 0
+  let fetchedAt: string | null = null
+  for (const lot of latestLots) {
+    vacant += lot.vacant_spaces
+    total += lot.total_spaces
+    if (lot.fetched_at && (!fetchedAt || lot.fetched_at > fetchedAt)) {
+      fetchedAt = lot.fetched_at
+    }
+  }
+  return { vacant, total, fetchedAt }
 }
 
 function buildIcon(lot: ParkingLot): L.DivIcon {
@@ -75,6 +98,9 @@ function buildTooltip(lot: ParkingLot): string {
 }
 
 export function updateMarkers(lots: ParkingLot[]) {
+  latestLots = lots
+  const visible = isParkingVisible()
+
   for (const lot of lots) {
     if (lot.lat == null || lot.lon == null) continue
 
@@ -89,8 +115,8 @@ export function updateMarkers(lots: ParkingLot[]) {
           direction: 'top',
           offset: [0, -12],
         })
-        .addTo(map)
 
+      if (visible) marker.addTo(map)
       markers.set(lot.id, marker)
     }
   }

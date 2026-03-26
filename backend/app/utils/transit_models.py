@@ -2,6 +2,10 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+"""
+Used to define the data models for the parking data we fetch from
+https://api.swu.de/mobility/v1/vehicle/trip/Trip. 
+"""
 
 class SWUPositionData(BaseModel):
     Longitude: float
@@ -46,4 +50,4 @@ class BusPosition(BaseModel):
     routeNumber: int
     direction: str
     deviation: int
-    category: int  # 1=tram, 5=bus
+    category: int 

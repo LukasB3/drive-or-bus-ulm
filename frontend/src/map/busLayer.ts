@@ -2,12 +2,14 @@ import L from 'leaflet'
 import type { BusPosition } from '../types/bus'
 import { lineColor } from './colors'
 import { showRoute, hideRoute } from './routeLayer'
+import { isRouteVisible, subscribe } from '../header/state'
 
 const markers = new Map<number, L.Marker>()
 const markerRoute = new Map<number, number>()
 let layerGroup: L.LayerGroup
 let activeRoute: number | null = null
 let hoverCount = 0
+let latestBuses: BusPosition[] = []
 
 // Inject styles once
 const style = document.createElement('style')
@@ -48,6 +50,33 @@ document.head.appendChild(style)
 
 export function createBusLayer(map: L.Map) {
   layerGroup = L.layerGroup().addTo(map)
+  subscribe(applyRouteFilter)
+}
+
+export function applyRouteFilter() {
+  for (const [id, marker] of markers) {
+    const route = markerRoute.get(id)
+    if (route == null) continue
+    if (isRouteVisible(route)) marker.addTo(layerGroup)
+    else layerGroup.removeLayer(marker)
+  }
+}
+
+export function getBusCounts(): { buses: number; trams: number } {
+  let buses = 0, trams = 0
+  for (const b of latestBuses) {
+    if (b.routeNumber === 201) continue
+    if (b.category === 1) trams++
+    else buses++
+  }
+  return { buses, trams }
+}
+
+export function getAverageDelay(): number {
+  const valid = latestBuses.filter(b => b.routeNumber !== 201)
+  if (valid.length === 0) return 0
+  const total = valid.reduce((sum, b) => sum + b.deviation, 0)
+  return Math.round(total / valid.length)
 }
 
 function formatDelay(seconds: number): string {
@@ -85,10 +114,13 @@ function buildTooltip(bus: BusPosition): string {
 }
 
 export function updateBusMarkers(buses: BusPosition[]) {
+  latestBuses = buses
   const activeIds = new Set<number>()
 
   for (const bus of buses) {
+    if (bus.routeNumber === 201) continue
     activeIds.add(bus.vehicleNumber)
+    const visible = isRouteVisible(bus.routeNumber)
 
     const existing = markers.get(bus.vehicleNumber)
     if (existing) {
@@ -96,6 +128,8 @@ export function updateBusMarkers(buses: BusPosition[]) {
       existing.setIcon(buildIcon(bus))
       existing.setTooltipContent(buildTooltip(bus))
       markerRoute.set(bus.vehicleNumber, bus.routeNumber)
+      if (visible) existing.addTo(layerGroup)
+      else layerGroup.removeLayer(existing)
     } else {
       const route = bus.routeNumber
       const marker = L.marker([bus.lat, bus.lon], { icon: buildIcon(bus) })
@@ -121,7 +155,7 @@ export function updateBusMarkers(buses: BusPosition[]) {
           }
         })
 
-      marker.addTo(layerGroup)
+      if (visible) marker.addTo(layerGroup)
       markers.set(bus.vehicleNumber, marker)
       markerRoute.set(bus.vehicleNumber, route)
     }
