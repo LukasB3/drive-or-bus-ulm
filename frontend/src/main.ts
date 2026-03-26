@@ -1,6 +1,10 @@
 import 'leaflet/dist/leaflet.css'
 import { createMap, updateMarkers } from './map/map'
 import { fetchParkingLots, subscribeToUpdates } from './api/parking'
+import { createBusLayer, updateBusMarkers } from './map/busLayer'
+import { connectBusWebSocket } from './api/bus'
+import { createRouteLayer, loadRouteShapes } from './map/routeLayer'
+import { fetchRouteShapes } from './api/routes'
 
 const style = document.createElement('style')
 style.textContent = `
@@ -13,14 +17,23 @@ style.textContent = `
 `
 document.head.appendChild(style)
 
-createMap()
+const map = createMap()
 
-// Initial load
+// Parking: initial load + realtime subscription
 const lots = await fetchParkingLots()
 updateMarkers(lots)
 
-// Realtime: re-fetch all when new status rows arrive
 subscribeToUpdates(async () => {
   const updated = await fetchParkingLots()
   updateMarkers(updated)
 })
+
+// Route shapes: pre-load polylines (shown on bus/tram hover)
+createRouteLayer(map)
+fetchRouteShapes()
+  .then(loadRouteShapes)
+  .catch((e) => console.warn('Failed to load route shapes:', e))
+
+// Bus: WebSocket live updates
+createBusLayer(map)
+connectBusWebSocket(updateBusMarkers)

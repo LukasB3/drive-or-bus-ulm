@@ -13,6 +13,10 @@ CREATE TABLE IF NOT EXISTS public.parking_lots (
 
 COMMENT ON TABLE public.parking_lots IS 'Static information about parking garages in Ulm.';
 
+ALTER TABLE public.parking_lots ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow anonymous read access" ON public.parking_lots
+    FOR SELECT USING (true);
+
 -- ############################################################
 -- TABLE 2: PARKING STATUS (The "Live" History)
 -- ############################################################
@@ -26,6 +30,10 @@ CREATE TABLE IF NOT EXISTS public.parking_status (
 );
 
 COMMENT ON TABLE public.parking_status IS 'Real-time occupancy logs fetched from parken-in-ulm.de.';
+
+ALTER TABLE public.parking_status ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow anonymous read access" ON public.parking_status
+    FOR SELECT USING (true);
 
 -- ############################################################
 -- PERFORMANCE: INDEX FOR REAL-TIME DASHBOARD
@@ -73,3 +81,41 @@ $$ LANGUAGE sql STABLE;
 -- REALTIME: Enable for parking_status (live frontend updates)
 -- ############################################################
 ALTER PUBLICATION supabase_realtime ADD TABLE parking_status;
+
+-- ############################################################
+-- TABLE 3: ROUTE SHAPES (GTFS polylines, refreshed weekly)
+-- ############################################################
+CREATE TABLE IF NOT EXISTS public.route_shapes (
+    id SERIAL PRIMARY KEY,
+    route_number INTEGER NOT NULL,
+    direction TEXT NOT NULL,              -- 'inbound' / 'outbound'
+    category INTEGER NOT NULL,            -- 1=tram, 5=bus
+    coordinates JSONB NOT NULL,           -- [[lat, lon], ...]
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (route_number, direction)
+);
+
+COMMENT ON TABLE public.route_shapes IS 'GTFS route polylines from SWU, refreshed weekly.';
+
+ALTER TABLE public.route_shapes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow anonymous read access" ON public.route_shapes
+    FOR SELECT USING (true);
+
+DROP TRIGGER IF EXISTS update_route_shapes_modtime ON public.route_shapes;
+CREATE TRIGGER update_route_shapes_modtime
+    BEFORE UPDATE ON public.route_shapes
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_modified_column();
+
+-- ############################################################
+-- FUNCTION: GET ROUTE SHAPES (for frontend initial load)
+-- ############################################################
+CREATE OR REPLACE FUNCTION get_route_shapes()
+RETURNS TABLE (
+    route_number INTEGER, direction TEXT,
+    category INTEGER, coordinates JSONB
+) AS $$
+    SELECT route_number, direction, category, coordinates
+    FROM public.route_shapes
+    ORDER BY route_number, direction;
+$$ LANGUAGE sql STABLE;

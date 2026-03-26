@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from app.database import supabase
 
-router = APIRouter()  # <--- This is what main.py is looking for!
+router = APIRouter() 
 
 @router.get("/health")
 async def health_check():

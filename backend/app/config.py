@@ -10,8 +10,18 @@ ENV_FILE = ROOT_DIR / ".env"
 class Settings(BaseSettings):
 
     APP_NAME: str = "Ulm Drive-or-Bus"
+
+    # fetches live parking data
     PARKING_API_URL: str = "https://parken-in-ulm.de/get_parking_data"
-    FETCH_INTERVAL_SECONDS: int = 30
+    FETCH_INTERVAL_SECONDS: int = 300
+
+    # fetches live bus data
+    SWU_API_URL: str = "https://api.swu.de/mobility/v1/vehicle/trip/Trip"
+    BUS_FETCH_INTERVAL_SECONDS: int = 15
+
+    # updates the routes of the busses
+    GTFS_URL: str = "https://gtfs.swu.de/daten/SWU.zip"
+    GTFS_FETCH_INTERVAL_SECONDS: int = 604800  # 1 week
     
     # Safety mechanism to prevent accidental use of production credentials in development.
     # OVERRIDE_ME is a placeholder that must be replaced with actual credentials in the .env
