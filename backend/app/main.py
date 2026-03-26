@@ -7,6 +7,7 @@ from app.tasks.fetch_transit import bus_broadcast_loop
 from app.tasks.fetch_gtfs import gtfs_loop
 from app.routes import health, parking, transit
 from app.ws_manager import BusWSManager
+from app.config import settings
 from app.logger import logger
 
 """
@@ -43,10 +44,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=settings.CORS_ORIGINS,
     allow_methods=["GET"],
     allow_headers=["*"],
 )

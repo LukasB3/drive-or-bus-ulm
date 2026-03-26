@@ -35,7 +35,12 @@ class DevSettings(Settings):
 
     ENV_NAME: str = "dev"
     DEBUG: bool = True
-    
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://drive-or-bus-ulm.pages.dev",
+    ]
+
     SUPABASE_URL: str = Field(..., validation_alias="SUPABASE_DEV_URL")
     SUPABASE_KEY: str = Field(..., validation_alias="SUPABASE_DEV_KEY")
     SUPABASE_ANON_KEY: str = Field(..., validation_alias="SUPABASE_DEV_ANON")
@@ -44,6 +49,9 @@ class ProdSettings(Settings):
 
     ENV_NAME: str = "prod"
     DEBUG: bool = False
+    CORS_ORIGINS: list[str] = [
+        "https://drive-or-bus-ulm.pages.dev",
+    ]
 
     SUPABASE_URL: str = Field(..., validation_alias="SUPABASE_PROD_URL")
     SUPABASE_KEY: str = Field(..., validation_alias="SUPABASE_PROD_KEY")

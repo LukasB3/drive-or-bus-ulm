@@ -22,6 +22,7 @@ export function createHeader() {
     <div class="sidebar-desc">
       Live-Karte der Ulmer Parkhäuser und Bus-/Straßenbahnpositionen.
       Parkdaten werden alle 5 Minuten aktualisiert, Fahrzeugpositionen alle 15 Sekunden.
+      Marker auf der Karte anklicken für zusätzliche Informationen.
     </div>
 
     <div class="sidebar-section" id="sb-section-parking">
@@ -107,6 +108,32 @@ export function createHeader() {
   }
 }
 
+function lerpColor(a: [number, number, number], b: [number, number, number], t: number): string {
+  const c = Math.min(Math.max(t, 0), 1)
+  const r = Math.round(a[0] + (b[0] - a[0]) * c)
+  const g = Math.round(a[1] + (b[1] - a[1]) * c)
+  const bl = Math.round(a[2] + (b[2] - a[2]) * c)
+  return `rgb(${r},${g},${bl})`
+}
+
+const GREEN: [number, number, number] = [74, 222, 128]
+const YELLOW: [number, number, number] = [250, 204, 21]
+const RED: [number, number, number] = [248, 113, 113]
+
+function delayColor(delaySec: number): string {
+  if (delaySec <= 0) return lerpColor(GREEN, GREEN, 0)
+  return lerpColor(YELLOW, RED, Math.min(delaySec / 180, 1))
+}
+
+function delayBgColor(delaySec: number): string {
+  if (delaySec <= 0) return 'rgba(34,197,94,0.15)'
+  const t = Math.min(delaySec / 180, 1)
+  const r = Math.round(250 + (239 - 250) * t)
+  const g = Math.round(204 + (68 - 204) * t)
+  const b = Math.round(21 + (68 - 21) * t)
+  return `rgba(${r},${g},${b},0.15)`
+}
+
 function delayBadgeHtml(avgDelaySec: number, small = false): string {
   const absSec = Math.abs(avgDelaySec)
   const mins = Math.floor(absSec / 60)
@@ -116,18 +143,22 @@ function delayBadgeHtml(avgDelaySec: number, small = false): string {
     ? 'pünktlich'
     : `${sign}${mins}:${secs.toString().padStart(2, '0')} m`
 
-  const cls = absSec <= 30 ? 'good' : absSec <= 120 ? 'warn' : 'bad'
+  const color = delayColor(avgDelaySec)
+  const bg = delayBgColor(avgDelaySec)
   const smCls = small ? ' delay-badge--sm' : ''
-  return `<span class="delay-badge delay-badge--${cls}${smCls}">${label}</span>`
+  return `<span class="delay-badge${smCls}" style="color:${color};background:${bg}">${label}</span>`
 }
 
 export function updateParkingStats(vacant: number, total: number, fetchedAt: string | null) {
   const pct = total > 0 ? Math.round(((total - vacant) / total) * 100) : 0
+  const parkColor = pct < 50
+    ? lerpColor(GREEN, GREEN, 0)
+    : lerpColor(YELLOW, RED, (pct - 50) / 50)
   parkingOccupancyEl.textContent = `${pct}%`
-  parkingOccupancyEl.style.color = pct >= 80 ? '#f87171' : pct >= 50 ? '#facc15' : '#4ade80'
+  parkingOccupancyEl.style.color = parkColor
   parkingFreeEl.textContent = `${vacant} / ${total}`
   parkingSummaryEl.textContent = `${pct}%`
-  parkingSummaryEl.style.color = pct >= 80 ? '#f87171' : pct >= 50 ? '#facc15' : '#4ade80'
+  parkingSummaryEl.style.color = parkColor
 
   if (fetchedAt) {
     const time = new Date(fetchedAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })

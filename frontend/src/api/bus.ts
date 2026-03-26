@@ -1,6 +1,7 @@
 import type { BusPosition } from '../types/bus'
 
-const WS_URL = `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws/bus`
+const WS_BASE = import.meta.env.VITE_WS_URL || `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}`
+const WS_URL = `${WS_BASE}/ws/bus`
 const RECONNECT_DELAY_MS = 3000
 
 export function connectBusWebSocket(onUpdate: (buses: BusPosition[]) => void) {
