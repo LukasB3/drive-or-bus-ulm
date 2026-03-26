@@ -3,9 +3,7 @@ from typing import List, Optional
 
 """
 Used to define the data models for the parking data we fetch from
-https://parken-in-ulm.de/get_parking_data. We are doing this to ensure
-the data we receive from the API is in the expected format, since the
-data from the API might change.
+https://parken-in-ulm.de/get_parking_data. 
 """
 
 class ParkingFacility(BaseModel):
