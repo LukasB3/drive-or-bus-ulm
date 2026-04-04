@@ -3,6 +3,7 @@ import { defineConfig } from 'vite'
 const apiTarget = process.env.VITE_API_TARGET || 'http://localhost:8000'
 
 export default defineConfig({
+  envDir: '../',
   server: {
     host: '0.0.0.0',
     proxy: {
