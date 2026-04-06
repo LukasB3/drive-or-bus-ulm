@@ -12,7 +12,7 @@ export function occupancyColor(pct: number): string {
 }
 
 export const LINE_COLORS: Record<number, string> = {
-  1:  '#FFFF00', // Tram — yellow
+  1:  '#E42229', // Tram — red
   2:  '#40AC56', // Tram — green
   3:  '#005DA3', // Tram — blue
   4:  '#06806E', // Tram — teal
