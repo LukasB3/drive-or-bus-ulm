@@ -3,6 +3,7 @@ import type { BusPosition } from '../types/bus'
 import { lineColor } from './colors'
 import { showRoute, hideRoute } from './routeLayer'
 import { isRouteVisible, subscribe } from '../header/state'
+import { isSpecialRoute } from '../config'
 
 const markers = new Map<number, L.Marker>()
 const markerRoute = new Map<number, number>()
@@ -65,7 +66,7 @@ export function applyRouteFilter() {
 export function getBusCounts(): { buses: number; trams: number } {
   let buses = 0, trams = 0
   for (const b of latestBuses) {
-    if (b.routeNumber === 201) continue
+    if (isSpecialRoute(b.routeNumber)) continue
     if (b.category === 1) trams++
     else buses++
   }
@@ -73,7 +74,7 @@ export function getBusCounts(): { buses: number; trams: number } {
 }
 
 export function getAverageDelay(): number {
-  const valid = latestBuses.filter(b => b.routeNumber !== 201)
+  const valid = latestBuses.filter(b => !isSpecialRoute(b.routeNumber))
   if (valid.length === 0) return 0
   const total = valid.reduce((sum, b) => sum + b.deviation, 0)
   return Math.round(total / valid.length)
@@ -118,7 +119,7 @@ export function updateBusMarkers(buses: BusPosition[]) {
   const activeIds = new Set<number>()
 
   for (const bus of buses) {
-    if (bus.routeNumber === 201) continue
+    if (isSpecialRoute(bus.routeNumber)) continue
     activeIds.add(bus.vehicleNumber)
     const visible = isRouteVisible(bus.routeNumber)
 

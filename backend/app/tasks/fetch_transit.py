@@ -4,6 +4,7 @@ import httpx
 
 from app.config import settings
 from app.logger import logger
+from app.tasks.fetch_gtfs import headsigns
 from app.utils.transit_models import BusPosition, SWUVehicleTripResponse
 from app.ws_manager import BusWSManager
 
@@ -22,13 +23,18 @@ async def fetch_bus_positions() -> list[BusPosition]:
         if entry.JourneyData.RouteNumber is None or entry.VehicleCategory is None:
             continue
         deviation = entry.TimeData.Deviation if entry.TimeData else 0
+        journey = entry.JourneyData
+        # SWU Direction 1/2 = GTFS direction_id 0/1; the destination text is sometimes empty
+        direction = journey.DepartureDirectionText or (
+            headsigns.get((journey.RouteNumber, journey.Direction - 1), "") if journey.Direction else ""
+        )
         positions.append(BusPosition(
             vehicleNumber=entry.VehicleNumber,
             lat=entry.PositionData.Latitude,
             lon=entry.PositionData.Longitude,
             bearing=entry.PositionData.Bearing,
             routeNumber=entry.JourneyData.RouteNumber,
-            direction=entry.JourneyData.ArrivalDirectionText or "",
+            direction=direction,
             deviation=deviation,
             category=entry.VehicleCategory,
         ))

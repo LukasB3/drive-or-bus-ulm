@@ -273,14 +273,76 @@
 .sidebar-footer {
   margin-top: auto;
   padding: 14px 16px;
+  font: inherit;
   font-size: 11px;
   color: #64748b;
   text-align: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.sidebar-footer:hover {
+  color: #94a3b8;
+  text-decoration: underline;
+}
+
+/* Impressum */
+.impressum {
+  width: min(640px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  box-sizing: border-box;
+  padding: 24px;
+  background: #1e293b;
+  color: #e2e8f0;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  font-family: system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.impressum::backdrop {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.impressum h1 {
+  margin: 0 0 12px;
+  font-size: 20px;
+  color: #f8fafc;
+}
+
+.impressum h2 {
+  margin: 20px 0 4px;
+  font-size: 14px;
+  color: #f8fafc;
+}
+
+.impressum p {
+  margin: 0 0 8px;
+  color: #cbd5e1;
+}
+
+.impressum a {
+  color: #60a5fa;
+}
+
+.impressum-close {
+  float: right;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
 }
 
 /* Mobile */
 @media (max-width: 640px) {
   .sidebar {
+    position: static;
+    flex: 0 0 auto;
+    box-sizing: border-box;
     width: 100%;
     height: auto;
     max-height: 50vh;

@@ -7,6 +7,7 @@ import { createRouteLayer, loadRouteShapes } from './map/routeLayer'
 import { fetchRouteShapes } from './api/routes'
 import { createHeader, updateBusStats, updateParkingStats, setKnownRoutes } from './header/header'
 import { setAllRoutes } from './header/state'
+import { isSpecialRoute } from './config'
 
 const style = document.createElement('style')
 style.textContent = `
@@ -24,10 +25,16 @@ style.textContent = `
     bottom: 0;
   }
   @media (max-width: 640px) {
+    body {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+    }
     #map {
+      position: relative;
       left: 0;
-      top: 50vh;
-      bottom: 0;
+      flex: 1;
+      min-height: 0;
     }
   }
 `
@@ -62,7 +69,7 @@ connectBusWebSocket((buses) => {
   if (!routesInitialized) {
     const routeMap = new Map<number, number>()
     for (const b of buses) {
-      if (b.routeNumber === 201) continue
+      if (isSpecialRoute(b.routeNumber)) continue
       routeMap.set(b.routeNumber, b.category)
     }
     setAllRoutes(new Set(routeMap.keys()))
