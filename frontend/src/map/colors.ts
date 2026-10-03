@@ -29,6 +29,23 @@ export const LINE_COLORS: Record<number, string> = {
   15: '#B180B7', // Bus — mauve
 }
 
+export const LINE_NAMES: Record<number, string> = {
+  1:  'Söflingen – Böfingen',
+  2:  'Kuhberg – Science Park II',
+  4:  'Wiblingen – Böfingen Süd',
+  5:  'Ludwigsfeld / Wiley – Wissenschaftsstadt',
+  6:  'Donaustadion – Eselsberg Hasenkopf',
+  7:  'Willy-Brandt-Platz – Jungingen',
+  8:  'Grimmelfingen – Universität Süd',
+  9:  'Gleißelstetten – Roter Berg',
+  10: 'Donautal – Blautal-Center',
+  11: 'ZOB – Eggingen – ZOB',
+  12: 'ZOB – Unterweiler / Dellmensingen',
+  13: 'Jungingen – Mähringen',
+  14: 'Kuhberg – Wiblingen',
+  15: 'Willy-Brandt-Platz – Science Park III',
+}
+
 const FALLBACK_COLOR = '#888888'
 
 export function lineColor(routeNumber: number): string {
