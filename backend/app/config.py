@@ -1,8 +1,6 @@
-from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pathlib import Path
 from functools import lru_cache
-import os
 
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 ENV_FILE = ROOT_DIR / ".env"
@@ -23,45 +21,20 @@ class Settings(BaseSettings):
     GTFS_URL: str = "https://gtfs.swu.de/daten/SWU.zip"
     GTFS_FETCH_INTERVAL_SECONDS: int = 604800  # 1 week
     
-    # Safety mechanism to prevent accidental use of production credentials in development.
-    # OVERRIDE_ME is a placeholder that must be replaced with actual credentials in the .env
-    # file for the settings to validate successfully.
-    SUPABASE_URL: str = Field(..., validation_alias="OVERRIDE_ME")
-    SUPABASE_KEY: str = Field(..., validation_alias="OVERRIDE_ME")
-
-    model_config = SettingsConfigDict(env_file=ENV_FILE, extra="ignore")
-
-class DevSettings(Settings):
-
-    ENV_NAME: str = "dev"
-    DEBUG: bool = True
     CORS_ORIGINS: list[str] = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
-        "https://drive-or-bus-ulm.pages.dev",
+        "https://drive-or-bus.lukasbossert.com",
+        "https://drive-or-bus-ulm.vercel.app",
     ]
 
-    SUPABASE_URL: str = Field(..., validation_alias="SUPABASE_DEV_URL")
-    SUPABASE_KEY: str = Field(..., validation_alias="SUPABASE_DEV_KEY")
-    SUPABASE_ANON_KEY: str = Field(..., validation_alias="SUPABASE_DEV_ANON")
+    SUPABASE_URL: str
+    SUPABASE_KEY: str
 
-class ProdSettings(Settings):
-
-    ENV_NAME: str = "prod"
-    DEBUG: bool = False
-    CORS_ORIGINS: list[str] = [
-        "https://drive-or-bus-ulm.pages.dev",
-    ]
-
-    SUPABASE_URL: str = Field(..., validation_alias="SUPABASE_PROD_URL")
-    SUPABASE_KEY: str = Field(..., validation_alias="SUPABASE_PROD_KEY")
-    SUPABASE_ANON_KEY: str = Field(..., validation_alias="SUPABASE_PROD_ANON")
+    model_config = SettingsConfigDict(env_file=ENV_FILE, extra="ignore")
 
 @lru_cache()
 def get_settings():
-    env = os.getenv("ENV_MODE", "dev").lower()
-    if env == "prod":
-        return ProdSettings()
-    return DevSettings()
+    return Settings()
 
 settings = get_settings()

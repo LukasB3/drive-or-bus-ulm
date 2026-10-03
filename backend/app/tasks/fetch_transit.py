@@ -19,7 +19,7 @@ async def fetch_bus_positions() -> list[BusPosition]:
     for entry in parsed.VehicleTrip.TripData:
         if not entry.IsActive or entry.PositionData is None or entry.JourneyData is None:
             continue
-        if entry.JourneyData.RouteNumber is None:
+        if entry.JourneyData.RouteNumber is None or entry.VehicleCategory is None:
             continue
         deviation = entry.TimeData.Deviation if entry.TimeData else 0
         positions.append(BusPosition(
