@@ -27,7 +27,7 @@ class SWUJourneyData(BaseModel):
 
 class SWUTripEntry(BaseModel):
     VehicleNumber: int
-    VehicleCategory: int
+    VehicleCategory: Optional[int] = None
     IsActive: bool
     PositionData: Optional[SWUPositionData] = None
     TimeData: Optional[SWUTimeData] = None

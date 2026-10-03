@@ -2,7 +2,7 @@
 
 Real-time parking and transit tracker for Ulm. Shows live parking garage occupancy and bus / tram positions on an interactive map to help you decide: drive or take the bus?
 
-**Live:** [drive-or-bus-ulm.pages.dev](https://drive-or-bus-ulm.pages.dev)
+**Live:** [drive-or-bus.lukasbossert.com](https://drive-or-bus.lukasbossert.com)
 
 ## Data Sources / Flow
 - Parking: backend fetches [parken-in-ulm.de](https://parken-in-ulm.de) → writes to Supabase → frontend subscribes via Realtime
@@ -23,14 +23,10 @@ Real-time parking and transit tracker for Ulm. Shows live parking garage occupan
 - [Node.js](https://nodejs.org/) (for frontend)
 - [uv](https://docs.astral.sh/uv/) (for backend)
 - [Supabase](https://supabase.com/) project with schema from `db/init_supabase.sql`
-- Requires a root `.env` with Supabase credentials:
+- Requires a root `.env` with Supabase credentials (used by backend and frontend):
 ```
-SUPABASE_DEV_URL=<your-supabase-url>
-SUPABASE_DEV_KEY=<your-anon-key>
-SUPABASE_DEV_ANON=<your-anon-key>
-```
-- Requires `frontend/.env` with:
-```
+SUPABASE_URL=<your-supabase-url>
+SUPABASE_KEY=<your-service-role-key>
 VITE_SUPABASE_URL=<your-supabase-url>
 VITE_SUPABASE_ANON_KEY=<your-anon-key>
 ```
@@ -55,5 +51,5 @@ npm run dev
 ## Deployment 
 
 - **Backend:** Docker on Hetzner VPS, behind Caddy reverse proxy with auto-HTTPS
-- **Frontend:** Cloudflare Pages (static build from `frontend/dist/`)
+- **Frontend:** Vercel (GitHub integration, root directory `frontend/`, push to `main` = production)
 - **Database:** Supabase (eu-central-1)
