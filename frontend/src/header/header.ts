@@ -1,5 +1,7 @@
 import './header.css'
 import { lineColor } from '../map/colors'
+import { isSpecialRoute } from '../config'
+import { openImpressum } from './impressum'
 import {
   toggleRoute, isRouteVisible, setRoutesVisible, toggleParking, isParkingVisible,
 } from './state'
@@ -75,9 +77,10 @@ export function createHeader() {
       </div>
     </div>
   `
-  const footer = document.createElement('div')
+  const footer = document.createElement('button')
   footer.className = 'sidebar-footer'
-  footer.textContent = 'Created by Lukas B.'
+  footer.textContent = 'Impressum'
+  footer.addEventListener('click', openImpressum)
   sidebar.appendChild(footer)
 
   document.body.prepend(sidebar)
@@ -178,7 +181,7 @@ export function setKnownRoutes(routeMap: Map<number, number>) {
   const buses: number[] = []
 
   for (const [route, category] of routeMap) {
-    if (route === 201) continue
+    if (isSpecialRoute(route)) continue
     if (category === 1) trams.push(route)
     else buses.push(route)
   }

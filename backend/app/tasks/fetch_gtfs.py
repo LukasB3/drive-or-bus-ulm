@@ -2,6 +2,7 @@ import asyncio
 import csv
 import io
 import zipfile
+from collections import Counter
 
 import httpx
 
@@ -16,6 +17,9 @@ into the route_shapes Supabase table.
 
 ROUTE_TYPE_TO_CATEGORY = {0: 1, 900: 1}
 BUS_CATEGORY = 5
+
+# (route_number, GTFS direction_id) → most common trip_headsign
+headsigns: dict[tuple[int, int], str] = {}
 
 
 def _parse_csv(text: str) -> list[dict[str, str]]:
@@ -87,11 +91,36 @@ def _process_gtfs(zip_bytes: bytes) -> list[dict]:
     return rows
 
 
+def _process_headsigns(zip_bytes: bytes) -> dict[tuple[int, int], str]:
+    with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
+        routes_raw = _parse_csv(zf.read("routes.txt").decode("utf-8-sig"))
+        trips_raw = _parse_csv(zf.read("trips.txt").decode("utf-8-sig"))
+
+    route_numbers = {
+        r["route_id"]: int(r["route_short_name"])
+        for r in routes_raw
+        if r.get("route_short_name", "").isdigit()
+    }
+
+    counts: dict[tuple[int, int], Counter[str]] = {}
+    for t in trips_raw:
+        route_number = route_numbers.get(t["route_id"])
+        headsign = t.get("trip_headsign")
+        if route_number is None or not headsign:
+            continue
+        key = (route_number, int(t.get("direction_id") or 0))
+        counts.setdefault(key, Counter())[headsign] += 1
+
+    return {key: c.most_common(1)[0][0] for key, c in counts.items()}
+
+
 async def fetch_and_sync_gtfs():
     async with httpx.AsyncClient(timeout=60, verify=False) as client:
         try:
             response = await client.get(settings.GTFS_URL)
             response.raise_for_status()
+
+            headsigns.update(_process_headsigns(response.content))
 
             rows = _process_gtfs(response.content)
 
