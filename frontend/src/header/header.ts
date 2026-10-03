@@ -1,5 +1,5 @@
 import './header.css'
-import { lineColor } from '../map/colors'
+import { lineColor, LINE_NAMES } from '../map/colors'
 import { isSpecialRoute } from '../config'
 import { openImpressum } from './impressum'
 import {
@@ -79,7 +79,7 @@ export function createHeader() {
   `
   const footer = document.createElement('button')
   footer.className = 'sidebar-footer'
-  footer.textContent = 'Impressum'
+  footer.textContent = 'Impressum & Datenschutz'
   footer.addEventListener('click', openImpressum)
   sidebar.appendChild(footer)
 
@@ -233,7 +233,16 @@ function buildRouteItem(route: number): HTMLElement {
   dot.style.background = lineColor(route)
 
   const text = document.createElement('span')
+  text.className = 'route-label'
   text.textContent = `Linie ${route}`
+
+  const name = LINE_NAMES[route]
+  if (name) {
+    const nameEl = document.createElement('span')
+    nameEl.className = 'route-name'
+    nameEl.textContent = `(${name})`
+    text.append(' ', nameEl)
+  }
 
   const cb = document.createElement('input')
   cb.type = 'checkbox'
