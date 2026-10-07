@@ -77,13 +77,16 @@ export function createHeader() {
       </div>
     </div>
   `
-  const footer = document.createElement('button')
-  footer.className = 'sidebar-footer'
-  footer.textContent = 'Impressum & Datenschutz'
-  footer.addEventListener('click', openImpressum)
-  sidebar.appendChild(footer)
-
   document.body.prepend(sidebar)
+
+  const footer = document.createElement('div')
+  footer.className = 'sidebar-footer'
+  footer.innerHTML = `
+    <span>Created by <a href="https://lukasbossert.com" target="_blank" rel="noopener">Lukas Bossert</a></span>
+    <button class="footer-impressum">Impressum &amp; Datenschutz</button>
+  `
+  footer.querySelector('.footer-impressum')!.addEventListener('click', openImpressum)
+  document.body.appendChild(footer)
 
   parkingTimestampEl = document.getElementById('sb-parking-ts')!
   parkingOccupancyEl = document.getElementById('sb-parking-occ')!
