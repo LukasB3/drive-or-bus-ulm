@@ -5,9 +5,9 @@ Real-time parking and transit tracker for Ulm. Shows live parking garage occupan
 **Live:** [drive-or-bus.lukasbossert.com](https://drive-or-bus.lukasbossert.com)
 
 ## Data Sources / Flow
-- Parking: backend fetches [parken-in-ulm.de](https://parken-in-ulm.de) → writes to Supabase → frontend subscribes via Realtime
-- Bus/tram: backend polls [SWU API](https://api.swu.de) every 15s → broadcasts to frontends via WebSocket 
-- Route shapes: backend downloads GTFS data from [gtfs.swu.de](https://gtfs.swu.de) weekly → stores polylines in Supabase → frontend fetches on load
+- Parking: backend fetches [parken-in-ulm.de](https://parken-in-ulm.de) every 5 min → pushes to frontends via WebSocket (`/ws/parking`)
+- Bus/tram: backend polls [SWU API](https://api.swu.de) every 15s → broadcasts to frontends via WebSocket (`/ws/bus`)
+- Route shapes: backend downloads GTFS data from [gtfs.swu.de](https://gtfs.swu.de) weekly → keeps polylines in memory → sends them to frontends via WebSocket (`/ws/routes`)
 
 ## Features
 
@@ -22,14 +22,7 @@ Real-time parking and transit tracker for Ulm. Shows live parking garage occupan
 
 - [Node.js](https://nodejs.org/) (for frontend)
 - [uv](https://docs.astral.sh/uv/) (for backend)
-- [Supabase](https://supabase.com/) project with schema from `db/init_supabase.sql`
-- Requires a root `.env` with Supabase credentials (used by backend and frontend):
-```
-SUPABASE_URL=<your-supabase-url>
-SUPABASE_KEY=<your-service-role-key>
-VITE_SUPABASE_URL=<your-supabase-url>
-VITE_SUPABASE_ANON_KEY=<your-anon-key>
-```
+- No database and no credentials: the backend keeps the latest data in memory and refills it on start
 ## Run local
 
 ### Backend
@@ -52,4 +45,4 @@ npm run dev
 
 - **Backend:** Docker on Hetzner VPS, behind Caddy reverse proxy with auto-HTTPS
 - **Frontend:** Vercel (GitHub integration, root directory `frontend/`, push to `main` = production)
-- **Database:** Supabase (eu-central-1)
+- **Database:** none; all state is in memory on the backend

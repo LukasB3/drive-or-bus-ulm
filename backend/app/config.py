@@ -28,9 +28,6 @@ class Settings(BaseSettings):
         "https://drive-or-bus-ulm.vercel.app",
     ]
 
-    SUPABASE_URL: str
-    SUPABASE_KEY: str
-
     model_config = SettingsConfigDict(env_file=ENV_FILE, extra="ignore")
 
 @lru_cache()

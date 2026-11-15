@@ -1,13 +1,16 @@
 import asyncio
+import json
+from datetime import datetime, timezone
+
 import httpx
 from app.config import settings
-from app.database import supabase
 from app.utils.parking_models import ParkingDataResponse
 from app.logger import logger
+from app.ws_manager import parking_channel
 
 """
 Fetches parking data in a fixed interval (defined in Config FETCH_INTERVAL_SECONDS)
-from https://parken-in-ulm.de/get_parking_data and syncs it to Supabase database.
+from https://parken-in-ulm.de/get_parking_data keeps the latest snapshot in memory and pushes it to /ws/parking clients.
 """
 
 # Static coordinates for Ulm parking garages (not provided by the API)
@@ -24,6 +27,9 @@ PARKING_COORDINATES: dict[int, tuple[float, float]] = {
     10: (48.400940, 9.994941),  # Kornhaus 
 }
 
+# Latest snapshot, shaped like frontend ParkingLot; mutated in place so importers see updates
+latest_lots: list[dict] = []
+
 async def fetch_and_sync_parking():
     async with httpx.AsyncClient(follow_redirects=True) as client:
         try:
@@ -35,25 +41,24 @@ async def fetch_and_sync_parking():
 
             validated = ParkingDataResponse(**response.json())
 
-            lots_rows = []
-            status_rows = []
+            fetched_at = datetime.now(timezone.utc).isoformat()
+            lots = []
             for facility in validated.result.facilities:
                 lat, lon = PARKING_COORDINATES.get(facility.id, (None, None))
-                lots_rows.append({
+                lots.append({
                     "id": facility.id,
                     "name": facility.name,
                     "total_spaces": facility.total_parking_spaces,
                     "lat": lat,
                     "lon": lon,
-                })
-                status_rows.append({
-                    "lot_id": facility.id,
                     "current_occupancy": facility.current_occupancy,
                     "vacant_spaces": facility.vacant_parking_spaces,
+                    "forecast_occupancy": None,
+                    "fetched_at": fetched_at,
                 })
 
-            supabase.table("parking_lots").upsert(lots_rows).execute()
-            supabase.table("parking_status").insert(status_rows).execute()
+            latest_lots[:] = sorted(lots, key=lambda lot: lot["id"])
+            await parking_channel.broadcast(json.dumps(latest_lots))
 
             logger.info(f"Successfully synced {len(validated.result.facilities)} parking facilities.")
 
