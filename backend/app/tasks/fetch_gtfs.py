@@ -1,18 +1,19 @@
 import asyncio
 import csv
 import io
+import json
 import zipfile
 from collections import Counter
 
 import httpx
 
 from app.config import settings
-from app.database import supabase
 from app.logger import logger
+from app.ws_manager import routes_channel
 
 """
-Downloads the SWU GTFS feed weekly and upserts route shape polylines
-into the route_shapes Supabase table.
+Downloads the SWU GTFS feed weekly, keeps the route shape polylines in memory
+and pushes them to /ws/routes clients.
 """
 
 ROUTE_TYPE_TO_CATEGORY = {0: 1, 900: 1}
@@ -20,6 +21,9 @@ BUS_CATEGORY = 5
 
 # (route_number, GTFS direction_id) → most common trip_headsign
 headsigns: dict[tuple[int, int], str] = {}
+
+# Route polylines, shaped like frontend RouteShape; mutated in place so importers see updates
+latest_shapes: list[dict] = []
 
 
 def _parse_csv(text: str) -> list[dict[str, str]]:
@@ -125,9 +129,8 @@ async def fetch_and_sync_gtfs():
             rows = _process_gtfs(response.content)
 
             if rows:
-                supabase.table("route_shapes").upsert(
-                    rows, on_conflict="route_number,direction"
-                ).execute()
+                latest_shapes[:] = sorted(rows, key=lambda r: (r["route_number"], r["direction"]))
+                await routes_channel.broadcast(json.dumps(latest_shapes))
 
             logger.info(f"Synced {len(rows)} route shapes from GTFS.")
 

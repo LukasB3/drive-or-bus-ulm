@@ -23,7 +23,7 @@ const PRIVACY_SECTIONS = [
   },
   {
     h: 'Live-Daten',
-    p: 'Die Parkhausdaten und Linienverläufe lädt Ihr Browser direkt aus einer Datenbank bei Supabase (Supabase, Inc.; Serverstandort Frankfurt am Main). Die Fahrzeugpositionen kommen über eine WebSocket-Verbindung von meinem Server bei der Hetzner Online GmbH, Industriestr. 25, 91710 Gunzenhausen. Dabei wird technisch bedingt Ihre IP-Adresse an diese Anbieter übermittelt. Ich selbst werte keine Zugriffe aus und führe keine Nutzerprofile. Rechtsgrundlage ist mein berechtigtes Interesse an der Bereitstellung der Live-Karte (Art. 6 Abs. 1 lit. f DSGVO).',
+    p: 'Parkhausbelegung, Fahrzeugpositionen und Linienverläufe kommen über WebSocket-Verbindungen von meinem Server bei der Hetzner Online GmbH, Industriestr. 25, 91710 Gunzenhausen. Dabei wird technisch bedingt Ihre IP-Adresse an diesen Anbieter übermittelt. Ich selbst werte keine Zugriffe aus und führe keine Nutzerprofile. Rechtsgrundlage ist mein berechtigtes Interesse an der Bereitstellung der Live-Karte (Art. 6 Abs. 1 lit. f DSGVO).',
   },
   {
     h: 'Karte',

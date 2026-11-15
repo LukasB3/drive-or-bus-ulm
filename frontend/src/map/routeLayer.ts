@@ -10,6 +10,8 @@ export function createRouteLayer(leafletMap: L.Map) {
 }
 
 export function loadRouteShapes(shapes: RouteShape[]) {
+  for (const lines of polylines.values()) for (const line of lines) line.remove()
+  polylines.clear()
   for (const shape of shapes) {
     const color = lineColor(shape.route_number)
     const latlngs: L.LatLngTuple[] = shape.coordinates.map(

@@ -52,7 +52,6 @@ async def bus_broadcast_loop(manager: BusWSManager):
         try:
             positions = await fetch_bus_positions()
             data = f"[{','.join(p.model_dump_json() for p in positions)}]"
-            manager.last_broadcast = data
             await manager.broadcast(data)
             logger.info(f"Broadcast {len(positions)} bus positions to {len(manager.connections)} clients")
         except Exception as e:

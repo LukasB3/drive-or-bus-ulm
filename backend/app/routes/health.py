@@ -1,13 +1,21 @@
 from fastapi import APIRouter
-from app.database import supabase
 
-router = APIRouter() 
+from app.tasks.fetch_parking import latest_lots
+from app.tasks.fetch_gtfs import latest_shapes
+from app.ws_manager import bus_channel, parking_channel, routes_channel
+
+router = APIRouter()
+
 
 @router.get("/health")
 async def health_check():
-    try:
-        # Simple query to see if Supabase is alive
-        supabase.table("parking_lots").select("id", count="exact").limit(1).execute()
-        return {"status": "online", "database": "connected"}
-    except Exception as e:
-        return {"status": "error", "database": str(e)}
+    return {
+        "status": "online",
+        "parking_lots": len(latest_lots),
+        "route_shapes": len(latest_shapes),
+        "clients": {
+            "bus": len(bus_channel.connections),
+            "parking": len(parking_channel.connections),
+            "routes": len(routes_channel.connections),
+        },
+    }

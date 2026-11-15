@@ -6,7 +6,7 @@ from app.tasks.fetch_parking import parking_loop
 from app.tasks.fetch_transit import bus_broadcast_loop
 from app.tasks.fetch_gtfs import gtfs_loop
 from app.routes import health, parking, transit
-from app.ws_manager import BusWSManager
+from app.ws_manager import bus_channel
 from app.config import settings
 from app.logger import logger
 
@@ -19,12 +19,9 @@ async def lifespan(app: FastAPI):
 
     logger.info("Starting Ulm Drive-or-Bus Backend...")
 
-    bus_manager = BusWSManager()
-    transit.set_manager(bus_manager)
-
     # Create background tasks here so it doesn't "block" the API from starting
     parking_task = asyncio.create_task(parking_loop())
-    bus_task = asyncio.create_task(bus_broadcast_loop(bus_manager))
+    bus_task = asyncio.create_task(bus_broadcast_loop(bus_channel))
     gtfs_task = asyncio.create_task(gtfs_loop())
 
     # The FastAPI app runs here
